@@ -3,6 +3,8 @@ CoAP client with sockets
 
 Documentatie Client CoAP
 
+Documentatie Client CoAP
+
  1. Scopul proiectului
 Scopul acestui proiect este implementarea unui client CoAP (Constrained Application Protocol) care permite trimiterea si accesarea unor documente de mic dimensiuni într-o arhitectură de tip remote storage.
 Protocolul CoAP este conceput pentru sisteme cu resurse limitate (dispozitive IoT, senzori, microcontrolere), fiind o alternativă ușoară la HTTP, bazată pe UDP.
@@ -90,6 +92,10 @@ Client  Server
       |<-----+     Header: 2.05 Content (T=ACK, Code=2.05, MID)
       | 2.05 |    Payload: "22.3 C"
       |      |
+
+
+
+
 
 
 
