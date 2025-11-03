@@ -23,56 +23,38 @@ Comunicarea între client și server se face exclusiv prin mesaje CoAP, transmis
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  Pachete proprietare (pentru aplicație)
-Tip
-Descriere
-Conținut Payload
-FILE_UPLOAD
-Client → Server
-Header CoAP (POST) + nume fișier + conținut fișier
-FILE_DOWNLOAD
-Client → Server
-Header CoAP (GET) + calea fișierului
-FILE_DELETE
-Client → Server
-Header CoAP (DELETE) + calea fișierului
-FILE_MOVE
-Client → Server
-Header CoAP (CUSTOM/MOVE) + calea sursă + calea destinație
-DIR_LIST
-Client → Server
-Header CoAP (GET) + calea directorului
-RESPONSE_OK / ERROR
-Server → Client
-Header CoAP (ACK) + cod + mesaj textual
+Tip				Descriere			Conținut Payload
+FILE_UPLOAD		Client → Server		Header CoAP (POST) + nume fișier + conținut fișier
+FILE_DOWNLOAD	Client → Server		Header CoAP (GET) + calea fișierului
+FILE_DELETE		Client → Server		Header CoAP (DELETE) + calea fișierului
+FILE_MOVE		Client → Server		Header CoAP (CUSTOM/MOVE) + calea sursă + calea destinație
+DIR_LIST		Client → Server		Header CoAP (GET) + calea directorului
+RESPONSE_OK / ERROR	Server → Client	Header CoAP (ACK) + cod + mesaj textual
 
 3.Operatiuni specifice CoAP si interactiunea intre server-client
 -POST /upload
 	Client trimite pachet Confirmable cu cod 0.02 (POST)
 	Server → ACK 2.01
 -GET /download
-Client trimite GET cu calea fișierului
-Server → ACK 2.05
+	Client trimite GET cu calea fișierului
+	Server → ACK 2.05
 -DELETE 
-Client → Confirmable cod 0.04 (DELETE)
-Server → ACK 2.02 
+	Client → Confirmable cod 0.04 (DELETE)
+	Server → ACK 2.02 
 -MOVE (metodă nouă)
-Client → Confirmable cod 0.08 (MOVE)
-Server → ACK 2.01 
+	Client → Confirmable cod 0.08 (MOVE)
+	Server → ACK 2.01 
 -GET /list
-Client → GET pe director
-Server → 2.05 
+	Client → GET pe director
+	Server → 2.05 
 
 4.Threading
 
 Clientul CoAP foloseste protocolul UDP si modulul socket
 
 Gestiune Threads:
-
-Main thread: Este responsabil doar pentru interacțiunea cu utilizatorul (preluarea input()-ului). Când primește o comandă, o adaugă într-o coadă (Queue) și revine imediat la input().
-Second thread:  Este responsabil doar pentru rețea. Rulează în buclă, extrage sarcini din coadă, trimite pachete (sendto), așteaptă răspunsuri (recvfrom - blocant) și afișează rezultatul.
-
-
-
+	Main thread: Este responsabil doar pentru interacțiunea cu utilizatorul (preluarea input()-ului). Când primește o comandă, o adaugă într-o coadă (Queue) și revine imediat la input().
+	Second thread:  Este responsabil doar pentru rețea. Rulează în buclă, extrage sarcini din coadă, trimite pachete (sendto), așteaptă răspunsuri (recvfrom - blocant) și afișează rezultatul.
 
 
 5.Schelet aplicatie
