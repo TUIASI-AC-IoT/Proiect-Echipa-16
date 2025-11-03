@@ -8,8 +8,9 @@ Clientul implementat oferă o serie de funcționalități printre care se număr
 	-crearea și ștergerea acestora,
 	-navigarea în structura de directoare,
 	-mutarea fișierelor între directoare
--implementarea unei interfete prietenoase.
+	-implementarea unei interfete prietenoase.
 Comunicarea între client și server se face exclusiv prin mesaje CoAP, transmise prin socket-uri UDP.
+
 2.Formatul pachetelor
     0                   1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -22,14 +23,26 @@ Comunicarea între client și server se face exclusiv prin mesaje CoAP, transmis
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- Pachete proprietare (pentru aplicație)
+
+În cadrul CoAP există 4 tipuri de mesaje: Confirmable (CON),Non-confirmable (NON), Acknowledge (ACK) și Reset (RST):
+A. Confirmable (CON):
+	- este trimis până la primirea unui mesaj de tipul ACK sau RST;
+	- cere trimiterea unui mesaj de tipul ACK sau RST, acestea din urmă trebuind să aibă același ID.
+B. Non-confirmable (NON):
+	- trimiterea lui nu necesită un mesaj de tip ACK sau RST.
+C. Acknowledge (ACK):
+	- nu indică succesul sau reușita unei cereri, arată doar faptul că cererea a ajuns la endpoint.
+D. Reset (RST):
+	- indică primirea unei cereri (CON sau NON) dar anumite detalii necesare lipsesc.
+
+
+Pachete proprietare (pentru aplicație)
 Tip				Descriere			Conținut Payload
 FILE_UPLOAD		Client → Server		Header CoAP (POST) + nume fișier + conținut fișier
 FILE_DOWNLOAD	Client → Server		Header CoAP (GET) + calea fișierului
 FILE_DELETE		Client → Server		Header CoAP (DELETE) + calea fișierului
 FILE_MOVE		Client → Server		Header CoAP (CUSTOM/MOVE) + calea sursă + calea destinație
 DIR_LIST		Client → Server		Header CoAP (GET) + calea directorului
-RESPONSE_OK / ERROR	Server → Client	Header CoAP (ACK) + cod + mesaj textual
 
 3.Operatiuni specifice CoAP si interactiunea intre server-client
 -POST /upload
@@ -93,6 +106,9 @@ Client  Server
       | 2.05 |    Payload: "22.3 C"
       |      |
 
+6.Bibliografie
 
-
+https://docs.streamsets.com/platform-datacollector/latest/datacollector/UserGuide/Destinations/CoAPClient.html#concept_fcy_cj4_sz
+https://datatracker.ietf.org/doc/html/rfc7252#section-2.2
+https://en.wikipedia.org/wiki/Constrained_Application_Protocol
 
