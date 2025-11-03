@@ -48,14 +48,37 @@ RESPONSE_OK / ERROR	Server → Client	Header CoAP (ACK) + cod + mesaj textual
 	Client → GET pe director
 	Server → 2.05 
 
-4.Threading
+4.Threading si modelare aplicatie
 
 Clientul CoAP foloseste protocolul UDP si modulul socket
-
-Gestiune Threads:
-	Main thread: Este responsabil doar pentru interacțiunea cu utilizatorul (preluarea input()-ului). Când primește o comandă, o adaugă într-o coadă (Queue) și revine imediat la input().
-	Second thread:  Este responsabil doar pentru rețea. Rulează în buclă, extrage sarcini din coadă, trimite pachete (sendto), așteaptă răspunsuri (recvfrom - blocant) și afișează rezultatul.
-
+	
+Main Thread ( UI )
+|
+|
+—> Utilizatorul inițiază o cerere (ex: GET )
+|
+|—> Thread de Pregatire Cerere
+   |
+   |—> Identifică metoda și resursa
+   |—> Dacă e nevoie (POST):
+   |  |
+   |  |—> Thread pentru fișiere 
+   |  |   |
+   |  |   —> Citește datele (payload) dintr-un fișier local
+   |
+   |—> Thread de Trimitere și Răspuns
+       |
+       |—> Formează pachetul UDP 
+       |—> Trimite pachetul UDP la server
+       |
+       |—> Așteaptă răspunsul de la server 
+       |
+       |—> Răspuns primit!
+       |
+       |—> Decodifică pachetul de răspuns (ex: 2.05 Content)
+|
+|
+—> Main Thread continuă 
 
 5.Schelet aplicatie
 Exemplu al metodei GET cu ACK din partea serverului
