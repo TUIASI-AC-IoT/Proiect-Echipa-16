@@ -23,6 +23,25 @@ Comunicarea între client și server se face exclusiv prin mesaje CoAP, transmis
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+Header:
+	-este alcătuit din 4 octeți
+Token:
+	-rolul token-ului este acela de a corela cererile cu răspunsurile. Astfel, cererea
+respectiv răspunsul primit vor avea același token.
+Options:
+	-conțin informații suplimentare despre mesaj, cum ar fi tipul de conținut, calea resursei, dimensiunea datelor sau parametri specifici aplicației.
+Payload:
+	-aici este situat mesajul propriu-zis
+
+Pachete proprietare (pentru aplicație)
+Tip				Descriere			Conținut Payload
+FILE_UPLOAD		Client → Server		Header CoAP (POST) + nume fișier + conținut fișier
+FILE_DOWNLOAD	Client → Server		Header CoAP (GET) + calea fișierului
+FILE_DELETE		Client → Server		Header CoAP (DELETE) + calea fișierului
+FILE_MOVE		Client → Server		Header CoAP (CUSTOM/MOVE) + calea sursă + calea destinație
+DIR_LIST		Client → Server		Header CoAP (GET) + calea directorului
+
+3.Transmiterea mesajelor
 
 În cadrul CoAP există 4 tipuri de mesaje: Confirmable (CON),Non-confirmable (NON), Acknowledge (ACK) și Reset (RST):
 A. Confirmable (CON):
@@ -35,16 +54,7 @@ C. Acknowledge (ACK):
 D. Reset (RST):
 	- indică primirea unei cereri (CON sau NON) dar anumite detalii necesare lipsesc.
 
-
-Pachete proprietare (pentru aplicație)
-Tip				Descriere			Conținut Payload
-FILE_UPLOAD		Client → Server		Header CoAP (POST) + nume fișier + conținut fișier
-FILE_DOWNLOAD	Client → Server		Header CoAP (GET) + calea fișierului
-FILE_DELETE		Client → Server		Header CoAP (DELETE) + calea fișierului
-FILE_MOVE		Client → Server		Header CoAP (CUSTOM/MOVE) + calea sursă + calea destinație
-DIR_LIST		Client → Server		Header CoAP (GET) + calea directorului
-
-3.Operatiuni specifice CoAP si interactiunea intre server-client
+4.Operatiuni specifice CoAP si interactiunea intre server-client
 -POST /upload
 	Client trimite pachet Confirmable cu cod 0.02 (POST)
 	Server → ACK 2.01
@@ -61,7 +71,7 @@ DIR_LIST		Client → Server		Header CoAP (GET) + calea directorului
 	Client → GET pe director
 	Server → 2.05 
 
-4.Threading si modelare aplicatie
+5.Threading si modelare aplicatie
 
 Clientul CoAP foloseste protocolul UDP si modulul socket
 	
@@ -93,7 +103,7 @@ Main Thread ( UI )
 |
 —> Main Thread continuă 
 
-5.Exemplu aplicatie
+6.Exemplu aplicatie
 Exemplu al metodei GET cu ACK din partea serverului
 Client  Server
       |      |
