@@ -3,8 +3,6 @@ import socket
 import json
 import struct
 
-from server import PAYLOAD_MARKER
-
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 5683
 CLIENT_PORT = 5003
