@@ -2,8 +2,11 @@ import random
 import socket
 import json
 import struct
+<<<<<<< HEAD
 import threading
 import queue
+=======
+>>>>>>> 1a0431c924717be64328acf5c6daf2d3527431e5
 
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 5683
