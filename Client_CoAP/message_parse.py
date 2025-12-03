@@ -1,78 +1,61 @@
-from enum import Enum
 import json
+import random
+import struct
 
-
-
-class T(Enum):
-    Confirmable = 0
-    NonConfirmable = 1
-    Acknowledgement = 2
-    Reset = 3
-#tipuri de cereri
-class Code(Enum):
-    GET = b'00000001'
-    POST = b'00000010'
-    PUT = b'00000011'
-    DELETE = b'00000100'
-    MOVE = b'00000101'
-#options
-class Option(Enum):
-    FILE = "file"
-    DIR = "dir"
 
 class Message:
-    __version = 0b01
-    #versiune implicita
-    def __init__(self ,token = None,option: Option = None, payload: dict = None):
-        self.msg_type = T.Confirmable
+    CON = 0 #Confirmable
+    NON = 1 #Non confirmable
+    ACK = 2 #Aacknowledgement
 
-        #viitor JSON
-        self.payload = payload
-        self.option = option
-        self.code = b'00000000'
-        self.token = token
-        self.tokenLength = 0
+    GET = 1
+    POST = 2
+    DELETE = 3
+    MOVE = 4
 
-    def pack(self) :
-        msg = bytearray()
+    PAYLOAD_MARKER = 0xFF
 
-        if self.token is not None and self.token > 0:
-            self.tokenLength = (self.token.bit_length() + 7) //8
+    def __init__(self,code:int,msg_type = CON,payload = None, msg_id = None):
+        self.version = 1
+        self.msg_type = msg_type
+        self.tkl = 0
+        self.code = code
+        if msg_id is not None:
+            self.msg_id = msg_id
         else:
-            self.tokenLength = 0
+            self.msg_id = random.randint(0, 0xFFFF)
 
-        if self.tokenLength > 8:
-            self.tokenLength = 8
-
-        msg.append(((self.__version << 6) + (self.msg_type.value << 4) + self.tokenLength))
-
-        # Ultimul pas: to_bytes() foloseste self.tokenLength calculat
-        msg.extend(self.token.to_bytes(self.tokenLength))
-
-        #option file/dir
-        json_option = json.dumps(self.option.value)
-        msg.extend(json_option.encode('utf-8'))
-
-        #Marcator de payload
-        msg.append(0xFF)
-        json_payload = json.dumps(self.payload)
-        msg.extend(json_payload.encode('utf-8'))
-
-        return msg
-    def addPayload(self, payload):
         self.payload = payload
 
-    def addOption(self, option):
-        self.option = option
+    def parse_packet(self):
+
+        first_byte = (self.version << 6) | (self.msg_type << 4) | self.tkl
+
+        # Pachetul binar: (Byte 1, Byte Code, Message ID)
+        header = struct.pack("!BBH", first_byte, self.code, self.msg_id)
+
+        # Punem payload in Json
+        packet = header
+        if self.payload:
+            json_bytes = json.dumps(self.payload).encode('utf-8')
+            packet += bytes([self.PAYLOAD_MARKER])
+            packet += json_bytes
+
+        return packet, self.msg_id
+    def parse_coap_header(response_data):
+        response_first_byte, response_code, response_msg_id = struct.unpack("!BBH", response_data[:4])
+        response_type = (response_first_byte >> 4) & 0x03
+        print(f"[CLIENT] primeste raspunsul : (Code:{response_code},Type:{response_type},Msg ID:{response_msg_id})")
+        # In cazul in care avem payload
+        if 0xFF in response_data:
+            response_payload = response_data.split(b'\xff')[1]
+        return response_payload
+
+    def print(self):
+        print(self.payload)
 
 
-
-json_msg = {
-    "path": "/directory/file.txt",
-    "content": "Data"
-}
-msg = Message(token = 3,option = Option.DIR,payload = json_msg)
-print(msg.pack())
-msg.addOption(Option.FILE)
-print(msg.pack())
-
+download = {"path":"/home/text.txt"}
+msg = Message(1,0,download)
+pack,m = msg.parse_packet()
+print(pack)
