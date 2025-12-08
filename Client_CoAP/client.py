@@ -78,14 +78,32 @@ class ClientCoap:
             response = self.response_queue.get()
             print(f"[SERVER] {response}")
 
+    def send_get(self,path):
+        path = {"path":path}
+        self.send_request(Message.GET,Message.CON,path)
 
+    def send_post(self,path,payload):
+        path = {"path":path}
+        if payload:
+            path["content"] = payload
+        self.send_request(Message.POST,Message.CON,path)
+
+    def send_delete(self,path):
+        path = {"path":path}
+        self.send_request(Message.DELETE,Message.CON,path)
+
+    def send_move(self,path,new_path):
+        path = {"path":path}
+        if new_path:
+            path["content"] = new_path
+        self.send_request(Message.MOVE,Message.CON,path)
 
 if __name__ == '__main__':
 
     c1 = ClientCoap()
     c1.connect()
     download = {"path":"/home/text.txt"}
-    send_thread = threading.Thread(target=c1.send_request, args=(1,0,download))
+    send_thread = threading.Thread(target=c1.send_post, args=("/home/text.txt","12345gsgsg"))
     handle_thread = threading.Thread(target=c1.response_handler, args=(),daemon=True)
 
     send_thread.start()
