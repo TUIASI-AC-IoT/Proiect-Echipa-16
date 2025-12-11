@@ -1,7 +1,10 @@
 import socket
 import json
+import struct
 import threading
 import queue
+import time
+
 from message_parse import Message
 from fragmentAsembler import FragmentAssembler
 
@@ -49,18 +52,50 @@ class ClientCoap:
             return {"status": "error", "message": str(e)}
 
     def response(self):
+        assembler = FragmentAssembler()
         while True:
             try:
                 response_data, server_addr = self.sock.recvfrom(14000)
+                print("Teo")
                 if len(response_data) < 4:
                     raise ValueError("Response data is too short")
-                msg = FragmentAssembler.handle_if_fragment(response_data)
-                response_payload = Message.parse_coap_header(msg)
-                try:
-                    self.response_queue.put(json.loads(response_payload.decode('utf-8')))
-                except json.JSONDecodeError:
-                    self.response_queue.put({"status": "error", "message": "Json Invalid"})
-                self.response_queue.put({"status": "corect", "message": "ACK primit fara payload"})
+
+                first_byte, code,msg_id = struct.unpack("!BBH",response_data[:4])
+                version = (first_byte >> 6) & 0x03
+                msg_type = (first_byte >> 4) & 0x03  # 0=CON, 1=NON, 2=ACK, 3=RST
+                tkl = first_byte & 0x0F
+
+                payload_dict = None
+                if 0xFF in response_data:
+                    try:
+                        _, payload_part = response_data.split(bytes([0xFF]), 1)
+                        if payload_part:
+                            payload_dict = json.loads(payload_part.decode('utf-8'))
+                    except json.JSONDecodeError:
+                        print("[CLIENT] Eroare decodare JSON payload")
+                    except Exception as e:
+                        print(f"[CLIENT] Eroare parsare payload: {e}")
+
+                if msg_type == Message.ACK:
+                    log_msg = f"ACK primit (Msg ID: {msg_id}, Code: {code})"
+                    self.response_queue.put({"status": "ack", "message": log_msg})
+
+                    # Daca e un ACK gol (Code 0), nu mai avem ce procesa
+                if code == 0 and payload_dict is None:
+                    continue
+                current_msg = Message(code, msg_type, payload_dict, msg_id=msg_id)
+
+                processed_msg = assembler.handle_if_fragment(current_msg)
+                final_payload = processed_msg.get_payload()
+
+                if final_payload:
+                    is_simple_ack = (msg_type == Message.ACK and code == 0)
+
+                    if not is_simple_ack:
+                        self.response_queue.put(final_payload)
+
+
+
             except socket.timeout:
                 continue  # Timeout occurred, keep listening
             except OSError as e:
@@ -104,13 +139,19 @@ if __name__ == '__main__':
     c1 = ClientCoap()
     c1.connect()
     download = {"path":"/home/text.txt"}
-    send_thread = threading.Thread(target=c1.send_get, args=("/home/text.txt",))
+
     handle_thread = threading.Thread(target=c1.response_handler, args=(),daemon=True)
-
-    send_thread.start()
     handle_thread.start()
-
+    send_thread = threading.Thread(target=c1.send_get, args=("/home/text.txt",))
+    send_thread.start()
     send_thread.join()
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("[MAIN] Oprire client.")
+        c1.disconnect()
 
 
 
