@@ -3,6 +3,7 @@ import json
 import threading
 import queue
 from message_parse import Message
+from fragmentAsembler import FragmentAssembler
 
 PAYLOAD_MARKER = 0xFF
 
@@ -50,11 +51,11 @@ class ClientCoap:
     def response(self):
         while True:
             try:
-                response_data, server_addr = self.sock.recvfrom(4096)
+                response_data, server_addr = self.sock.recvfrom(14000)
                 if len(response_data) < 4:
                     raise ValueError("Response data is too short")
-
-                response_payload = Message.parse_coap_header(response_data)
+                msg = FragmentAssembler.handle_if_fragment(response_data)
+                response_payload = Message.parse_coap_header(msg)
                 try:
                     self.response_queue.put(json.loads(response_payload.decode('utf-8')))
                 except json.JSONDecodeError:
@@ -103,7 +104,7 @@ if __name__ == '__main__':
     c1 = ClientCoap()
     c1.connect()
     download = {"path":"/home/text.txt"}
-    send_thread = threading.Thread(target=c1.send_post, args=("/home/text.txt","12345gsgsg"))
+    send_thread = threading.Thread(target=c1.send_get, args=("/home/text.txt",))
     handle_thread = threading.Thread(target=c1.response_handler, args=(),daemon=True)
 
     send_thread.start()

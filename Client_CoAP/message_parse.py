@@ -42,6 +42,7 @@ class Message:
             packet += json_bytes
 
         return packet, self.msg_id
+
     def parse_coap_header(response_data):
         response_first_byte, response_code, response_msg_id = struct.unpack("!BBH", response_data[:4])
         response_type = (response_first_byte >> 4) & 0x03
@@ -51,11 +52,12 @@ class Message:
             response_payload = response_data.split(b'\xff')[1]
         return response_payload
 
-    def print(self):
-        print(self.payload)
+    def get_payload(self):
+        return self.payload
 
 
 download = {"path":"/home/text.txt"}
 msg = Message(1,0,download)
 pack,m = msg.parse_packet()
 print(pack)
+print (msg.get_payload())
