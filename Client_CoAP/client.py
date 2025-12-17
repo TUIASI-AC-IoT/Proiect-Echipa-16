@@ -5,8 +5,10 @@ import threading
 import queue
 import time
 
+
 from message_parse import Message
 from fragmentAsembler import FragmentAssembler
+from Asembler import Asembler
 
 PAYLOAD_MARKER = 0xFF
 
@@ -102,8 +104,6 @@ class ClientCoap:
                     continue
                 current_msg = Message(code, msg_type, payload_dict, msg_id=msg_id)
 
-                # Check if this is a CON message with a fragment - send ACK immediately
-                # Fragments have "fragment" key in payload with index, total, size
                 is_fragment = (msg_type == Message.CON and 
                               payload_dict and 
                               isinstance(payload_dict, dict) and 
@@ -129,10 +129,8 @@ class ClientCoap:
                     if not is_simple_ack:
                         self.response_queue.put(final_payload)
 
-
-
             except socket.timeout:
-                continue  # Timeout occurred, keep listening
+                continue
             except OSError as e:
                 # Catches socket closing error
                 if 'closed' in str(e):
@@ -154,10 +152,22 @@ class ClientCoap:
         self.send_request(Message.GET,Message.CON,path)
 
     def send_post(self,path,payload):
-        path = {"path":path}
-        if payload:
-            path["content"] = payload
-        self.send_request(Message.POST,Message.CON,path)
+
+        asm = Asembler()
+        nr_fragments = asm.fragmente_necesare(payload)
+        
+        if nr_fragments == 1:
+            # No fragmentation needed, send normal POST
+            path_dict = {"path": path, "content": payload}
+            self.send_request(Message.POST, Message.CON, path_dict)
+        else:
+            # Fragmentation needed - split and send each fragment
+            fragments = asm.split_in_fragments(payload, path)
+            print(f"[CLIENT] Fragmenting payload into {nr_fragments} fragments for path: {path}")
+            
+            for fragment in fragments:
+                self.send_request(Message.POST, Message.CON, fragment)
+                time.sleep(0.01)
 
     def send_delete(self,path):
         path = {"path":path}
@@ -177,7 +187,7 @@ if __name__ == '__main__':
 
     handle_thread = threading.Thread(target=c1.response_handler, args=(),daemon=True)
     handle_thread.start()
-    send_thread = threading.Thread(target=c1.send_get, args=("storage/teo.txt",))
+    send_thread = threading.Thread(target=c1.send_post, args=("storage/teo.txt","teo"*100000))
     send_thread.start()
     send_thread.join()
 
