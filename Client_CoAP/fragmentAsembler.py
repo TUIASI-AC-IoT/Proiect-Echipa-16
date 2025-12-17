@@ -35,7 +35,7 @@ class FragmentAssembler:
 
         assembled_payload = {
             "path":path,
-            "content":assembled_content,
+            "content":assembled_content.decode('UTF-8'),
             "fragment":{
                 "index":index,
                 "total":total,

@@ -35,6 +35,23 @@ class ClientCoap:
     def disconnect(self):
         self.sock.close()
 
+    def send_ack(self, msg_id, server_addr, code=0):
+
+        version = 1
+        msg_type = Message.ACK  # ACK type = 2
+        tkl = 0
+        first_byte = (version << 6) | (msg_type << 4) | tkl
+        
+        header = struct.pack("!BBH", first_byte, code, msg_id)
+
+        packet = header
+        
+        try:
+            self.sock.sendto(packet, server_addr)
+            print(f"[CLIENT] ACK trimis pentru fragment (Msg ID: {msg_id})")
+        except Exception as e:
+            print(f"[CLIENT X] Eroare trimitere ACK: {e}")
+
     def send_request(self,code,msg_type = Message.CON,payload = None):
         m = Message(code, msg_type, payload)
         packet, msg_id = m.parse_packet()
@@ -85,8 +102,26 @@ class ClientCoap:
                     continue
                 current_msg = Message(code, msg_type, payload_dict, msg_id=msg_id)
 
+                # Check if this is a CON message with a fragment - send ACK immediately
+                # Fragments have "fragment" key in payload with index, total, size
+                is_fragment = (msg_type == Message.CON and 
+                              payload_dict and 
+                              isinstance(payload_dict, dict) and 
+                              "fragment" in payload_dict and
+                              isinstance(payload_dict.get("fragment"), dict) and
+                              "index" in payload_dict.get("fragment", {}))
+                
+                if is_fragment:
+                    # Send ACK for the fragment
+                    self.send_ack(msg_id, server_addr, code=0)
+                    frag_info = payload_dict.get("fragment", {})
+                    frag_index = frag_info.get("index", "?")
+                    frag_total = frag_info.get("total", "?")
+                    print(f"[CLIENT] Fragment {frag_index+1}/{frag_total} receptionat, ACK trimis (Msg ID: {msg_id})")
+
                 processed_msg = assembler.handle_if_fragment(current_msg)
                 final_payload = processed_msg.get_payload()
+
 
                 if final_payload:
                     is_simple_ack = (msg_type == Message.ACK and code == 0)
@@ -138,11 +173,11 @@ if __name__ == '__main__':
 
     c1 = ClientCoap()
     c1.connect()
-    download = {"path":"/home/text.txt"}
+    #download = {"path":"/home/text.txt"}
 
     handle_thread = threading.Thread(target=c1.response_handler, args=(),daemon=True)
     handle_thread.start()
-    send_thread = threading.Thread(target=c1.send_get, args=("/home/text.txt",))
+    send_thread = threading.Thread(target=c1.send_get, args=("storage/teo.txt",))
     send_thread.start()
     send_thread.join()
 

@@ -35,7 +35,6 @@ def parse_coap_header(data):
         "message_id": msg_id
     }
 
-
 def parse_packet(data):
     if PAYLOAD_MARKER in data:
         header_part, payload_part = data.split(bytes([PAYLOAD_MARKER]), 1)

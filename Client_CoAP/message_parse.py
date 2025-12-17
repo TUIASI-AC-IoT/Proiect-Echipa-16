@@ -10,8 +10,8 @@ class Message:
 
     GET = 1
     POST = 2
-    DELETE = 3
-    MOVE = 4
+    DELETE = 4
+    MOVE = 5
 
     PAYLOAD_MARKER = 0xFF
 
@@ -55,9 +55,10 @@ class Message:
     def get_payload(self):
         return self.payload
 
-
+'''
 download = {"path":"/home/text.txt"}
 msg = Message(1,0,download)
 pack,m = msg.parse_packet()
 print(pack)
 print (msg.get_payload())
+'''
