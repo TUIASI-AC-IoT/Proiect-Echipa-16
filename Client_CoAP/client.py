@@ -45,7 +45,6 @@ class ClientCoap:
         first_byte = (version << 6) | (msg_type << 4) | tkl
         
         header = struct.pack("!BBH", first_byte, code, msg_id)
-
         packet = header
         
         try:
@@ -81,7 +80,7 @@ class ClientCoap:
 
                 first_byte, code,msg_id = struct.unpack("!BBH",response_data[:4])
                 version = (first_byte >> 6) & 0x03
-                msg_type = (first_byte >> 4) & 0x03  # 0=CON, 1=NON, 2=ACK, 3=RST
+                msg_type = (first_byte >> 4) & 0x03
                 tkl = first_byte & 0x0F
 
                 payload_dict = None
@@ -179,17 +178,19 @@ class ClientCoap:
             path["content"] = new_path
         self.send_request(Message.MOVE,Message.CON,path)
 
+    def start_threading(self):
+        handle_thread = threading.Thread(target=self.response_handler, args=(), daemon=True)
+        handle_thread.start()
+    def send_post_thread(self,path,payload):
+        send_thread = threading.Thread(target=self.send_post, args=(path,payload), daemon=True)
+        send_thread.start()
 if __name__ == '__main__':
 
     c1 = ClientCoap()
     c1.connect()
-    #download = {"path":"/home/text.txt"}
 
-    handle_thread = threading.Thread(target=c1.response_handler, args=(),daemon=True)
-    handle_thread.start()
-    send_thread = threading.Thread(target=c1.send_post, args=("storage/teo.txt","teo"*100000))
-    send_thread.start()
-    send_thread.join()
+    c1.start_threading()
+    c1.send_post_thread("storage/teo.txt",payload="teo"*100000)
 
     try:
         while True:
