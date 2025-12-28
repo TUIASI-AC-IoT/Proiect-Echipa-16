@@ -11,7 +11,7 @@ client = None
 
 def update_gui_with_response(response):
     if T and root:
-        # creaza mesajul de trimis interfetei
+        # construim raspunsul de afisat pe textbox
         if isinstance(response, dict):
             if "status" in response:
                 if response["status"] == "ack":
@@ -23,11 +23,11 @@ def update_gui_with_response(response):
                 else:
                     message = f"[{response.get('status', 'UNKNOWN')}] {response.get('message', '')}\n"
             elif "path" in response:
-                # It's a file response
+
                 path = response.get("path", "unknown")
                 content = response.get("content", "")
                 
-                # Check if it was fragmented
+                # pentru fragmente
                 fragment_info = response.get("fragment", {})
                 if fragment_info:
                     frag_index = fragment_info.get("index", "?")
@@ -35,8 +35,9 @@ def update_gui_with_response(response):
                     frag_size = fragment_info.get("size", "?")
                     message = f"[<-] Received file (Fragment {frag_index+1}/{frag_total}, {frag_size} bytes):\n  Path: {path}\n"
                 else:
-                    #cand se termina de trimis fragmentele
-                    message = f"[<-] Received complete file from server:\n  Path: {path}\n  Size: {len(content)} bytes\n"
+                    #s-au strimis toate pachetele
+                    content_preview = content[:200] + "..." if len(content) > 200 else content
+                    message = f"[<-] Received complete file from server:\n  Path: {path}\n  Size: {len(content)} bytes\n preview: {content_preview}\n"
             else:
                 message = f"[<-] Response: {response}\n"
         else:
