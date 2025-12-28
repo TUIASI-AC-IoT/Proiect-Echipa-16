@@ -68,6 +68,6 @@ class Asembler:
             print(packet)
         return packets
 
-asm = Asembler()
-asm.build_fragments("download/teo",1,"teo"*100000,1)
+#asm = Asembler()
+#asm.build_fragments("download/teo",1,"teo"*100000,1)
 

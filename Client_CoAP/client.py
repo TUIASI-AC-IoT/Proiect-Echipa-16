@@ -21,6 +21,7 @@ class ClientCoap:
 
         self.response_queue = queue.Queue()
         self.response_thread = None
+        self.gui_callback = None  #callback pentru primire raspunsuri
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -116,7 +117,15 @@ class ClientCoap:
                     frag_info = payload_dict.get("fragment", {})
                     frag_index = frag_info.get("index", "?")
                     frag_total = frag_info.get("total", "?")
-                    print(f"[CLIENT] Fragment {frag_index+1}/{frag_total} receptionat, ACK trimis (Msg ID: {msg_id})")
+
+                    frag_msg = f"Fragment {frag_index+1}/{frag_total} receptionat, ACK trimis"
+                    print(f"[CLIENT] {frag_msg} (Msg ID: {msg_id})")
+                    # Also notify GUI about fragment reception
+                    if self.gui_callback:
+                        try:
+                            self.gui_callback({"status": "fragment", "message": frag_msg, "index": frag_index, "total": frag_total})
+                        except Exception as e:
+                            print(f"[CLIENT X] Error updating GUI for fragment: {e}")
 
                 processed_msg = assembler.handle_if_fragment(current_msg)
                 final_payload = processed_msg.get_payload()
@@ -131,7 +140,6 @@ class ClientCoap:
             except socket.timeout:
                 continue
             except OSError as e:
-                # Catches socket closing error
                 if 'closed' in str(e):
                     print("[CLIENT X] Response thread detected socket closed.")
                     break
@@ -141,10 +149,19 @@ class ClientCoap:
             except Exception as e:
                 print(f"[CLIENT X] Unexpected error in response thread: {e}")
                 break
+    def set_gui_callback(self, callback):
+        self.gui_callback = callback
+    
     def response_handler(self):
         while True:
             response = self.response_queue.get()
             print(f"[SERVER] {response}")
+
+            if self.gui_callback:
+                try:
+                    self.gui_callback(response)
+                except Exception as e:
+                    print(f"[CLIENT X] Error updating GUI: {e}")
 
     def send_get(self,path):
         path = {"path":path}
@@ -181,9 +198,23 @@ class ClientCoap:
     def start_threading(self):
         handle_thread = threading.Thread(target=self.response_handler, args=(), daemon=True)
         handle_thread.start()
+
+    def send_get_thread(self,path):
+        send_get_thread = threading.Thread(target=self.send_get, args=(path,), daemon=True)
+        send_get_thread.start()
+
     def send_post_thread(self,path,payload):
         send_thread = threading.Thread(target=self.send_post, args=(path,payload), daemon=True)
         send_thread.start()
+
+    def send_delete_thread(self,path):
+        send_delete_thread = threading.Thread(target=self.send_delete, args=(path,), daemon=True)
+        send_delete_thread.start()
+
+    def send_move_thread(self, path, new_path):
+        send_move_thread = threading.Thread(target=self.send_move, args=(path,new_path), daemon=True)
+        send_move_thread.start()
+'''
 if __name__ == '__main__':
 
     c1 = ClientCoap()
@@ -198,6 +229,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print("[MAIN] Oprire client.")
         c1.disconnect()
+'''
+
 
 
 
