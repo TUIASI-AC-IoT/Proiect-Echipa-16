@@ -25,21 +25,141 @@ Comunicarea între client și server se face exclusiv prin mesaje CoAP, transmis
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |1 1 1 1 1 1 1 1|    Payload (if any) ...
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-Header:
-	-este alcătuit din 4 octeți
-Token:
-	-rolul token-ului este acela de a corela cererile cu răspunsurile. Astfel, cererea
-respectiv răspunsul primit vor avea același token.
-Options:
-	-conțin informații suplimentare despre mesaj, cum ar fi tipul de conținut, calea resursei, dimensiunea datelor sau parametri specifici aplicației.
-Payload:
-	-aici este situat mesajul propriu-zis
+```
+**Header**:  
+&nbsp;&nbsp;&nbsp;&nbsp;-este alcătuit din 4 octeți  
+**Token**:  
+&nbsp;&nbsp;&nbsp;&nbsp;-rolul token-ului este acela de a corela cererile cu răspunsurile. Astfel, cererea
+respectiv răspunsul primit vor avea același token.  
+**Options**:  
+&nbsp;&nbsp;&nbsp;&nbsp;-conțin informații suplimentare despre mesaj, cum ar fi tipul de conținut, calea resursei, dimensiunea datelor sau parametri specifici aplicației.  
+**Payload**:  
+&nbsp;&nbsp;&nbsp;&nbsp;-aici este situat mesajul propriu-zis
 
-Pachete proprietare (pentru aplicație)
-Tip				Descriere			Conținut Payload
+**Pachete proprietare (pentru aplicație)**  
+```text
+Tip			Descriere			Conținut Payload
 FILE_UPLOAD		Client → Server		Header CoAP (POST) + nume fișier + conținut fișier
-FILE_DOWNLOAD	Client → Server		Header CoAP (GET) + calea fișierului
+FILE_DOWNLOAD	        Client → Server		Header CoAP (GET) + calea fișierului
 FILE_DELETE		Client → Server		Header CoAP (DELETE) + calea fișierului
 FILE_MOVE		Client → Server		Header CoAP (CUSTOM/MOVE) + calea sursă + calea destinație
 DIR_LIST		Client → Server		Header CoAP (GET) + calea directorului
 ```
+## 3. Transmiterea mesajelor
+
+În cadrul CoAP există 4 tipuri de mesaje: *Confirmable* (CON),*Non-confirmable* (NON), *Acknowledge* (ACK) și *Reset* (RST):  
+1. Confirmable (CON):
+	- este trimis până la primirea unui mesaj de tipul ACK sau RST;
+	- cere trimiterea unui mesaj de tipul ACK sau RST, acestea din urmă trebuind să aibă același ID.
+2. Non-confirmable (NON):
+	- trimiterea lui nu necesită un mesaj de tip ACK sau RST.
+3. Acknowledge (ACK):
+	- nu indică succesul sau reușita unei cereri, arată doar faptul că cererea a ajuns la endpoint.
+4. Reset (RST):
+	- indică primirea unei cereri (CON sau NON) dar anumite detalii necesare lipsesc.
+
+## 4. Operatiuni specifice CoAP si interactiunea intre server-client
+### Upload fișier (POST /upload)  
+Client trimite pachet Confirmable cu cod 0.02 (POST)  
+	Server salvează fișierul → trimite ACK 2.01 Created  
+	Payload: [path] + [file content]   
+Client:
+```json
+        {
+	  "path": "/directory/file.txt",
+	  "content": "Data"
+	}
+```
+Server:
+```json
+        {
+	  "status": "created",
+	  "path": "/directory/file.txt",
+	  "size": 1024
+	}
+	{
+	  "status": "error",
+	  "message": "Unable to execute"
+	}
+```
+### Download fișier (GET /download)  
+Client trimite GET cu calea fișierului  
+	Server trimite ACK 2.05 Content + payload cu fișierul  
+Client:
+```json
+        {
+	  "path": "/directory/file.txt"
+	}
+```
+Server:
+```json
+        {
+	  "name": "file.txt",
+	  "size": 2048,
+	  "content": "Data"
+	}
+	
+	{
+	  "status": "error",
+	  "message": "Unable to execute"
+	}
+```
+### Ștergere fișier (DELETE /path)
+Client → Confirmable cod 0.04 (DELETE)   
+	Server → ACK 2.02 Deleted  
+Client:
+```json
+       {
+	  "path": "/directory/file.txt"
+	}
+```
+Server:
+```json
+       {
+	  "status": "deleted",
+	  "path": "/directory/file.txt"
+	}
+	{
+	  "status": "error",
+	  "message": "Unable to execute"
+	}
+```
+### Mutare fișier (MOVE /src /dst) 
+Client → Confirmable cod 0.08 (MOVE)  
+	Server → ACK 2.01 Created dacă mutarea a reușit  
+Client:
+```json
+      {
+	  "source": "/directory/file_1.txt",
+	  "destination": "/directory2/file_1.txt"
+	}
+```
+Server:
+```json
+      {
+	  "status": "moved",
+	  "from": "/directory/file_1.txt",
+	  "to": "/directory2/file_1.txt"
+	}
+	{
+	  "status": "error",
+	  "message": "Unable to execute"
+	}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
