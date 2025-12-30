@@ -117,6 +117,10 @@ if __name__ == '__main__':
 
     var_con = tk.BooleanVar(value = True)
     chk = tk.Checkbutton(frm, text="Confirmable Mesages", variable = var_con)
+    if(var_con.get() == True):
+        client.set_confirmable()
+    else:
+        client.set_unconfirmable()
     chk.pack(side = tk.TOP, padx = 4)
 
     root.mainloop()

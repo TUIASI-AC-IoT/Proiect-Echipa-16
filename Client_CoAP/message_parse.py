@@ -55,10 +55,3 @@ class Message:
     def get_payload(self):
         return self.payload
 
-'''
-download = {"path":"/home/text.txt"}
-msg = Message(1,0,download)
-pack,m = msg.parse_packet()
-print(pack)
-print (msg.get_payload())
-'''

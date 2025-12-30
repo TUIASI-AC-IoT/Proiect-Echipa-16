@@ -19,9 +19,16 @@ class ClientCoap:
         self.client_port = client_port
         self.sock = None
 
+        self.confirmable = Message.CON
         self.response_queue = queue.Queue()
         self.response_thread = None
         self.gui_callback = None  #callback pentru primire raspunsuri
+
+    def set_confirmable(self):
+        self.confirmable = Message.CON
+
+    def set_unconfirmable(self):
+        self.confirmable = Message.NON
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -165,7 +172,7 @@ class ClientCoap:
 
     def send_get(self,path):
         path = {"path":path}
-        self.send_request(Message.GET,Message.CON,path)
+        self.send_request(Message.GET, self.confirmable,path)
 
     def send_post(self,path,payload):
 
@@ -175,25 +182,25 @@ class ClientCoap:
         if nr_fragments == 1:
             # No fragmentation needed, send normal POST
             path_dict = {"path": path, "content": payload}
-            self.send_request(Message.POST, Message.CON, path_dict)
+            self.send_request(Message.POST, self.confirmable, path_dict)
         else:
             # Fragmentation needed - split and send each fragment
             fragments = asm.split_in_fragments(payload, path)
             print(f"[CLIENT] Fragmenting payload into {nr_fragments} fragments for path: {path}")
             
             for fragment in fragments:
-                self.send_request(Message.POST, Message.CON, fragment)
+                self.send_request(Message.POST, self.confirmable, fragment)
                 time.sleep(0.01)
 
     def send_delete(self,path):
         path = {"path":path}
-        self.send_request(Message.DELETE,Message.CON,path)
+        self.send_request(Message.DELETE,self.confirmable,path)
 
     def send_move(self,path,new_path):
         path = {"path":path}
         if new_path:
             path["content"] = new_path
-        self.send_request(Message.MOVE,Message.CON,path)
+        self.send_request(Message.MOVE,self.confirmable,path)
 
     def start_threading(self):
         handle_thread = threading.Thread(target=self.response_handler, args=(), daemon=True)
