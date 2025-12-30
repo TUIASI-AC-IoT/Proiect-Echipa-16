@@ -46,6 +46,14 @@ def update_gui_with_response(response):
         # Use root.after() for thread-safe GUI update
         root.after(0, lambda msg=message: T.insert("1.0", msg))
 
+def on_button_toggle():
+    if var_con.get() == True:
+        client.set_confirmable()
+        print("Confirmable Mesages")
+    else:
+        client.set_unconfirmable()
+        print("Unconfirmable Mesages")
+
 def get_file_payload(filepath):
     with open(filepath, "r") as f:
         payload = f.read()
@@ -115,12 +123,10 @@ if __name__ == '__main__':
     btn_move = tk.Button(frm, text="MOVE",command = on_send_move )
     btn_move.pack(side=tk.LEFT, padx=4)
 
+    #CheckButton vor Con and Non-Con mesages
     var_con = tk.BooleanVar(value = True)
-    chk = tk.Checkbutton(frm, text="Confirmable Mesages", variable = var_con)
-    if(var_con.get() == True):
-        client.set_confirmable()
-    else:
-        client.set_unconfirmable()
+    chk = tk.Checkbutton(frm, text="Confirmable Mesages", variable = var_con,onvalue= True, offvalue = False, command= on_button_toggle)
+
     chk.pack(side = tk.TOP, padx = 4)
 
     root.mainloop()
