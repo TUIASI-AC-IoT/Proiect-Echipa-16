@@ -146,10 +146,42 @@ Server:
 	  "message": "Unable to execute"
 	}
 ```
+## 5. Threading si modelare aplicatie
 
-
-
-
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MAIN THREAD (GUI)                        │
+│  - Tkinter interface (root.mainloop())                      │
+│  - file dialogs, entry fields ,buttons                      │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ Create de GUI
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              BACKGROUND THREADS (Daemon)                    │
+│                                                             │
+│  1. response_thread (porneste in connect())                 │  	                                   
+│         - asteapta continuu mesaje de la server             │
+│         - detecteaza fragmente si trimite Ack               │
+│         - pune raspunsurile in response_queue(thread safe)  │
+│                                                             │
+│  2. handle_thread (porneste in start_threading())           │
+│         - Gets responses from response_queue                │
+│         - apeleaza gui_callback() pentru a updata GUI       │
+│                                                             │
+│  3. send_get_thread (porneste la apasarea butonului GET)    │
+│         - apeleaza functia send_get()                       │
+│                                                             │
+│  4. send_post_thread (porneste la apasarea butonului POST)  │
+│         - apeleaza functia send_post()                      │
+│         - daca este nevoie se fragmenteaza ianinte de send  │
+│  5. send_delete_thread(porneste la apasarea butonului DELETE)│
+│         - apeleaza functia send_delete()                    │
+│                                                             │
+│  6. send_move_thread (porneste la apasarea butonului MOVE)  │
+│         - apeleaza functia send_move                        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 
 
