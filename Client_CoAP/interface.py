@@ -9,9 +9,19 @@ T = None
 root = None
 client = None
 
+import base64
+import ast #for single quotes ' ' instead of json " "
+
+
 def update_gui_with_response(response):
     if T and root:
-        # construim raspunsul de afisat pe textbox
+        # If the response is a string representation of a dict, convert it
+        if isinstance(response, str) and response.startswith("{"):
+            try:
+                response = ast.literal_eval(response)
+            except Exception as e:
+                print(f"Error parsing response string: {e}")
+
         if isinstance(response, dict):
             if "status" in response:
                 if response["status"] == "ack":
@@ -19,31 +29,38 @@ def update_gui_with_response(response):
                 elif response["status"] == "fragment":
                     frag_index = response.get("index", "?")
                     frag_total = response.get("total", "?")
-                    message = f"[<-] {response.get('message', '')} ({frag_index+1}/{frag_total})\n"
+                    message = f"[<-] {response.get('message', '')} ({frag_index + 1}/{frag_total})\n"
                 else:
                     message = f"[{response.get('status', 'UNKNOWN')}] {response.get('message', '')}\n"
-            elif "path" in response:
 
-                path = response.get("path", "unknown")
-                content = response.get("content", "")
-                
-                # pentru fragmente
+            elif "path" in response or "name" in response:
+                # Support both 'path' or 'name' as per your first message
+                path = response.get("path") or response.get("name", "unknown")
+                raw_content = response.get("content", "")
+
+                # decoding
+                try:
+                    # Decode Base64 to bytes, then to a UTF-8 string
+                    decoded_bytes = base64.b64decode(raw_content)
+                    content = decoded_bytes.decode('utf-8', errors='replace')
+                except Exception as e:
+                    print(f"Decoding error: {e}")
+                    content = raw_content  #revert the changes
+
                 fragment_info = response.get("fragment", {})
                 if fragment_info:
                     frag_index = fragment_info.get("index", "?")
                     frag_total = fragment_info.get("total", "?")
                     frag_size = fragment_info.get("size", "?")
-                    message = f"[<-] Received file (Fragment {frag_index+1}/{frag_total}, {frag_size} bytes):\n  Path: {path}\n"
+                    message = f"[<-] Received file (Fragment {frag_index + 1}/{frag_total}, {frag_size} bytes):\n  Path: {path}\n Content: {content}\n"
                 else:
-                    #s-au strimis toate pachetele
                     content_preview = content[:200] + "..." if len(content) > 200 else content
                     message = f"[<-] Received complete file from server:\n  Path: {path}\n  Size: {len(content)} bytes\n preview: {content_preview}\n"
             else:
                 message = f"[<-] Response: {response}\n"
         else:
             message = f"[<-] Response: {response}\n"
-        
-        # Use root.after() for thread-safe GUI update
+
         root.after(0, lambda msg=message: T.insert("1.0", msg))
 
 def on_button_toggle():

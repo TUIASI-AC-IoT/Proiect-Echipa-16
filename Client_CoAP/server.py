@@ -349,9 +349,9 @@ if __name__ == "__main__":
             data, client_addr = sock.recvfrom(20000)
             print(f"\n[>] Pachet primit de la {client_addr}")
 
-            header, payload = parse_packet(data)
-            if header:
-                handle_request(header, payload, client_addr, sock)
+        header, payload = parse_packet(data)
+        if header:
+            handle_request(header, payload, client_addr, sock)
         except KeyboardInterrupt:
             print("\n[SERVER] Oprire server.")
             break

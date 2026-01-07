@@ -4,7 +4,9 @@ import struct
 import threading
 import queue
 import time
-
+#encoding
+import base64
+import ast
 
 from message_parse import Message
 from fragmentAsembler import FragmentAssembler
@@ -158,7 +160,7 @@ class ClientCoap:
                 break
     def set_gui_callback(self, callback):
         self.gui_callback = callback
-    
+
     def response_handler(self):
         while True:
             response = self.response_queue.get()
@@ -176,16 +178,24 @@ class ClientCoap:
 
     def send_post(self,path,payload):
 
+        path = f"storage/{path}"# pentru incarcare unui fisier avem nevoie de "storage/"
+
+        if isinstance(payload, str):
+            payload_bytes = payload.encode('utf-8')
+        else:
+            payload_bytes = payload
+
+        content_b64 = base64.b64encode(payload_bytes).decode("utf-8")
+        
         asm = Asembler()
-        nr_fragments = asm.fragmente_necesare(payload)
+        nr_fragments = asm.fragmente_necesare(content_b64)
         
         if nr_fragments == 1:
-            # No fragmentation needed, send normal POST
-            path_dict = {"path": path, "content": payload}
+            #no fragmentation neded
+            path_dict = {"path": path, "content": content_b64}
             self.send_request(Message.POST, self.confirmable, path_dict)
         else:
-            # Fragmentation needed - split and send each fragment
-            fragments = asm.split_in_fragments(payload, path)
+            fragments = asm.split_in_fragments(content_b64, path)
             print(f"[CLIENT] Fragmenting payload into {nr_fragments} fragments for path: {path}")
             
             for fragment in fragments:
@@ -197,9 +207,10 @@ class ClientCoap:
         self.send_request(Message.DELETE,self.confirmable,path)
 
     def send_move(self,path,new_path):
-        path = {"path":path}
+        path = {"source":path}
         if new_path:
-            path["content"] = new_path
+            path["destination"] = new_path
+        print(path)
         self.send_request(Message.MOVE,self.confirmable,path)
 
     def start_threading(self):
