@@ -53,7 +53,7 @@ class FragmentAssembler:
         index = frag.get("index")
         total = frag.get("total")
         size = frag.get("size")
-        return index,total,size
+        return index,total,sizegit
 
     def add_fragment(self,path,index,total,content):
         if path not in self.fragments:
