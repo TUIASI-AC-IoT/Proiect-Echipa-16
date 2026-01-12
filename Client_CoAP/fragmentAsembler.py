@@ -2,13 +2,6 @@ import json
 from message_parse import *
 
 class FragmentAssembler:
-    MAX_SIZE_PACHET = 14000
-    HEADER_SIZE = 4
-    PAYLOAD_MARKER_SIZE = 1
-    FRAGMENT_OVERHEAD = 200  # spatiu pentru metadata JSON
-
-    MAX_PAYLOAD_SIZE = MAX_SIZE_PACHET - HEADER_SIZE - PAYLOAD_MARKER_SIZE - FRAGMENT_OVERHEAD
-
     PAYLOAD_MARKER = 0xFF
     def __init__(self):
         self.fragments = {}

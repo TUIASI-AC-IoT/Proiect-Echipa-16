@@ -232,22 +232,7 @@ class ClientCoap:
     def send_move_thread(self, path, new_path):
         send_move_thread = threading.Thread(target=self.send_move, args=(path,new_path), daemon=True)
         send_move_thread.start()
-'''
-if __name__ == '__main__':
 
-    c1 = ClientCoap()
-    c1.connect()
-
-    c1.start_threading()
-    c1.send_post_thread("storage/teo.txt",payload="teo"*100000)
-
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("[MAIN] Oprire client.")
-        c1.disconnect()
-'''
 
 
 

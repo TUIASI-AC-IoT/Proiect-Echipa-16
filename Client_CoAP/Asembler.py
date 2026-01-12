@@ -3,6 +3,7 @@ import struct
 import math
 from message_parse import *
 
+#Fragmentare pachete pentru upload
 class Asembler:
     MAX_SIZE_PACHET = 14000
     HEADER_SIZE = 4
